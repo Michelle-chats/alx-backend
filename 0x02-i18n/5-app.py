@@ -1,24 +1,27 @@
 #!/usr/bin/env python3
-"""Mock logging in
+
 """
-from flask import Flask
+5. Basic Flask app
+"""
+
+from flask import Flask, render_template, request, g
 from flask_babel import Babel
-from flask import render_template, request, g
-from typing import Union, Dict
+
+app = Flask(__name__)
+babel = Babel(app)
 
 
 class Config:
-    """Represents a Flask Babel configuration.
+    """
+    Config class.
     """
     LANGUAGES = ["en", "fr"]
     BABEL_DEFAULT_LOCALE = "en"
     BABEL_DEFAULT_TIMEZONE = "UTC"
 
 
-app = Flask(__name__)
 app.config.from_object(Config)
-app.url_map.strict_slashes = False
-babel = Babel(app)
+
 users = {
     1: {"name": "Balou", "locale": "fr", "timezone": "Europe/Paris"},
     2: {"name": "Beyonce", "locale": "en", "timezone": "US/Central"},
@@ -27,39 +30,42 @@ users = {
 }
 
 
-def get_user() -> Union[Dict, None]:
-    """Retrieves a user based on a user id.
+def get_user(login_as):
     """
-    login_id = request.args.get('login_as')
-    if login_id:
-        return users.get(int(login_id))
-    return None
+    get_user.
+    """
+    try:
+        return users.get(int(login_as))
+    except Exception:
+        return
 
 
 @app.before_request
-def before_request() -> None:
-    """user login system is outside the scope of this project
+def before_request():
     """
-    user = get_user()
-    g.user = user
+    before_request
+    """
+    g.user = get_user(request.args.get("login_as"))
 
 
 @babel.localeselector
-def get_locale() -> str:
-    """Retrieves the locale for a web page.
+def get_locale():
     """
-    locale = request.args.get('locale', '')
-    if locale in app.config["LANGUAGES"]:
+    get_locale.
+    """
+    locale = request.args.get("locale")
+    if locale:
         return locale
-    return request.accept_languages.best_match(app.config["LANGUAGES"])
+    return request.accept_languages.best_match(app.config['LANGUAGES'])
 
 
-@app.route('/')
-def get_index() -> str:
-    """The home/index page.
+@app.route('/', methods=["GET"], strict_slashes=False)
+def hello():
+    """
+    hello.
     """
     return render_template('5-index.html')
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port="5000")
